@@ -2,17 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>My blog</title>
-    <link rel="stylesheet" href="../static/blog.css" />
+    <title>My Blog</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='blog.css') }}"
+    />
   </head>
   <body>
     <h1>My Blog</h1>
+    <a href="/add" class="add"
+      >Создать новый пост
+      <img class="icon" src="{{ url_for('static', filename='add.png')}}" alt=""
+    /></a>
     <div class="blog">
-        {% for post in posts %}
+      {% for post in posts %}
       <div class="card">
-          <h2><a href="">{{post.heading}}</a></h2>
-          <p>Дата: {{post.date}}</p>
-          <p>{{post.content}}</p>
+        <h2><a href="/post/{{post.id}}">{{ post.title }}</a></h2>
+        <p>{{ post.content }}</p>
       </div>
       {% endfor %}
     </div>

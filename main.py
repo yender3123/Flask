@@ -1,30 +1,57 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 import sqlite3
 
 app = Flask(__name__)
 
-connection = sqlite3.connect("sqlite.db")
-cursor = connection.cursor()
+def get_db_connection():
+    conn = sqlite3.connect("sqlite.db")
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def close_db(connection=None):
-    if connection is not None:
-        connection.close()
+def close_db(conn):
+    if conn:
+        conn.close()
 
 @app.teardown_appcontext
 def close_connection(exception):
-    close_db()
+    conn = get_db_connection()
+    close_db(conn)
 
 @app.route("/")
 def index():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     cursor.execute('SELECT * from posts')
     result = cursor.fetchall()
     posts = []
-    for post in result:
+    for post in reversed(result):
         posts.append(
-            {'id': post[0], 'title': post[1], 'content': post[2]}
+            {'id': post['id'], 'title': post['title'], 'content': post['content']}
         )
+    close_db(conn)
     context = {'posts': posts}
     return render_template('blog.html', **context)
+
+@app.route('/add', methods=['GET', 'POST'])
+def add_post():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        title = request.form['title']
+        content = request.form['content']
+        cursor.execute(
+            'INSERT INTO posts (title, content) VALUES(?, ?)',
+            (title, content)
+        )
+        conn.commit()
+        close_db(conn)
+        return redirect(url_for('index'))
+    close_db(conn)
+    return render_template('add_post.html')
+
+@app.route("/number/<int:number>")
+def say_number(number):
+    return f"Ты выбрал число {number}"
 
 @app.route("/Mark")
 def mark_name():
@@ -69,5 +96,18 @@ def blog():
     }
     return render_template('blog.html', **context)
 
+@app.route('/post/<int:post_id>')
+def post(post_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    post_one = cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    close_db(conn)
+    if post_one:
+        post_dict = {'id': post_one['id'], 'title': post_one['title'], 'content': post_one['content']}
+        return render_template('post.html', post=post_dict)
+    else:
+        return "Пост не найден", 404
+
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
