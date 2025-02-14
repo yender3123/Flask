@@ -1,16 +1,28 @@
-FROM python:3.9-slim
+FROM python:3.12-slim
 
-# Установим рабочую директорию
+# Create a non-root user
+RUN useradd -m myuser
+
+# Set working directory
 WORKDIR /app
 
-# Скопируем файлы приложения в контейнер
-COPY . /app
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
 
-# Установим зависимости
-RUN pip install --no-cache-dir Flask
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Укажем порт, который будет слушать приложение
+# Copy application files
+COPY . .
+
+# Change ownership to non-root user
+RUN chown -R myuser:myuser /app
+
+# Switch to non-root user
+USER myuser
+
+# Expose port
 EXPOSE 8080
 
-# Команда для запуска приложения
+# Run application
 CMD ["python", "main.py"]
