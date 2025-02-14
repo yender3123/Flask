@@ -10,7 +10,7 @@ COPY . /app
 RUN pip install --no-cache-dir Flask
 
 # Укажем порт, который будет слушать приложение
-EXPOSE 5000
+EXPOSE 8080
 
 # Команда для запуска приложения
 CMD ["python", "main.py"]
