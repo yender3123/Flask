@@ -9,8 +9,9 @@ WORKDIR /app
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies (including Gunicorn for production)
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir gunicorn
 
 # Copy application files
 COPY . .
@@ -24,5 +25,5 @@ USER myuser
 # Expose port
 EXPOSE 8080
 
-# Run application
-CMD ["python", "main.py"]
+# Use Gunicorn as the production server
+CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:8080", "--workers", "4"]
