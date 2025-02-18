@@ -1,0 +1,77 @@
+body {
+  font-family: "Courier New", monospace;
+  background-color: #282c34;
+  color: #eee;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.blog {
+  margin: auto;
+  max-width: 800px;
+}
+
+h1 {
+  font-size: 50px;
+  font-weight: 300;
+  color: #ff7f50;
+  text-align: center;
+}
+
+.card {
+  margin-bottom: 30px;
+  background-color: #343a40;
+  text-align: center;
+  width: 350px;
+  border: 2px solid white; /* Добавление белой рамки */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Добавление тени для лучшего эффекта */
+}
+
+.card {
+  transition: transform 0.3s ease, background-color 0.3s ease; /* Для анимации */
+  padding: 20px;
+  border-radius: 10px;
+}
+.card:hover {
+  transform: scale(1.02); /* Увеличение размера на 2% */
+  filter: brightness(90%); /* Уменьшение яркости на 10% */
+  cursor: pointer; /* Изменение курсора на "пальчик" */
+}
+
+a {
+  text-decoration: none;
+  color: #ff7f50;
+}
+.add {
+  background-color: #343a40;
+  color: white; /* Цвет текста белый */
+  padding: 10px 20px; /* Отступы внутри кнопки */
+  border: none; /* Без рамки */
+  border-radius: 5px; /* Скругленные углы */
+  font-size: 16px; /* Размер шрифта */
+  text-align: center; /* Выравнивание текста по центру */
+  text-decoration: none; /* Убрать подчеркивание */
+  display: inline-block; /* Отображать как блок */
+  transition: background-color 0.3s, transform 0.3s; /* Плавный переход цвета фона и трансформации */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 250px;
+  gap: 10px;
+  margin-bottom: 50px;
+  border: 2px solid white;
+}
+
+.add:hover {
+  filter: brightness(90%);
+  transform: scale(1.02); /* Увеличение размера на 2% */
+}
+.icon {
+  width: 32px;
+}
+.button {
+border: none;
+
+}
