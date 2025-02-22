@@ -7,10 +7,12 @@ body {
   flex-direction: column;
   align-items: center;
 }
-
+* {
+  box-sizing: border-box;
+}
 .blog {
-  margin: auto;
-  max-width: 800px;
+  /* margin: auto; */
+  /* max-width: 800px; */
 }
 
 h1 {
@@ -25,36 +27,35 @@ h1 {
   background-color: #343a40;
   text-align: center;
   width: 350px;
-  border: 2px solid white; /* Добавление белой рамки */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Добавление тени для лучшего эффекта */
-}
-
-.card {
-  transition: transform 0.3s ease, background-color 0.3s ease; /* Для анимации */
+  border: 2px solid white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, background-color 0.3s ease;
   padding: 20px;
   border-radius: 10px;
 }
+
 .card:hover {
-  transform: scale(1.02); /* Увеличение размера на 2% */
-  filter: brightness(90%); /* Уменьшение яркости на 10% */
-  cursor: pointer; /* Изменение курсора на "пальчик" */
+  transform: scale(1.02);
+  filter: brightness(90%);
+  cursor: pointer;
 }
 
 a {
   text-decoration: none;
   color: #ff7f50;
 }
+
 .add {
   background-color: #343a40;
-  color: white; /* Цвет текста белый */
-  padding: 10px 20px; /* Отступы внутри кнопки */
-  border: none; /* Без рамки */
-  border-radius: 5px; /* Скругленные углы */
-  font-size: 16px; /* Размер шрифта */
-  text-align: center; /* Выравнивание текста по центру */
-  text-decoration: none; /* Убрать подчеркивание */
-  display: inline-block; /* Отображать как блок */
-  transition: background-color 0.3s, transform 0.3s; /* Плавный переход цвета фона и трансформации */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.3s, transform 0.3s;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -66,12 +67,35 @@ a {
 
 .add:hover {
   filter: brightness(90%);
-  transform: scale(1.02); /* Увеличение размера на 2% */
+  transform: scale(1.02);
 }
+
+.icon {
+  width: 32px;
+}
+
+.button {
+  border: none;
+}
+
+.blog {
+  padding: 10px;
+  /* max-width: 100%; */
+}
+
 .icon {
   width: 32px;
 }
 .button {
-border: none;
-
+  border: none;
+}
+@media only screen and (max-width: 1000px) {
+  .card {
+    width: 400px;
+  }
+}
+@media only screen and (max-width: 450px) {
+  .card {
+    width: 250px;
+  }
 }
