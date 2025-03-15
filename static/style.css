@@ -71,3 +71,11 @@ a {
 a:hover {
   background-color: rgb(224, 12, 12);
 }
+.author {
+    color: gray;
+    text-align: right;
+}
+.center{
+    color: gray;
+    text-align: right;
+}

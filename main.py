@@ -1,77 +1,109 @@
 from flask import Flask, render_template, request, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+
 import sqlite3
 
 app = Flask(__name__)
 
-def get_db_connection():
-    conn = sqlite3.connect("sqlite.db")
-    conn.row_factory = sqlite3.Row
-    return conn
+app.config['SECRET_KEY'] = 'your_secret_key'
 
-def close_db(conn):
-    if conn:
-        conn.close()
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+connection = sqlite3.connect("sqlite.db", check_same_thread=False)
+cursor=connection.cursor()
+
+
+def close_db(connection=None):
+    if connection is not None:
+        connection.close()
 
 @app.teardown_appcontext
 def close_connection(exception):
-    conn = get_db_connection()
-    close_db(conn)
+    close_db()
+
+class User(UserMixin):
+    def __init__(self, id, username, password_hash):
+        self.id = id
+        self.username = username
+        self.password_hash = password_hash
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+@login_manager.user_loader
+def load_user(user_id):
+    user = cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+    if user is not None:
+        return User(user[0], user[1], user[2])
+    return None
+
+
 
 @app.route("/")
 def index():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * from posts')
+    cursor.execute('SELECT * FROM posts JOIN users ON posts.author_id = users.id')
     result = cursor.fetchall()
     posts = []
     for post in reversed(result):
         posts.append(
-            {'id': post['id'], 'title': post['title'], 'content': post['content']}
+            {'id': post[0], 'title': post[1], 'content': post[2], 'author_id': post[3], 'username': post[4                    ]}
         )
-    close_db(conn)
     context = {'posts': posts}
     return render_template('blog.html', **context)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        print(username, password)
+        user = cursor.execute('SELECT * FROM users WHERE username =?', (username,)
+        ).fetchone()
+        if user and User(user[0], user[1], user[2]).check_password(password):
+            login_user(User(user[0], user[1], user[2]))
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', message='Invalid username or password')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
 @app.route('/add', methods=['GET', 'POST'])
 def add_post():
-    conn = get_db_connection()
-    cursor = conn.cursor()
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
+        # author_id = request.form['']
         cursor.execute(
             'INSERT INTO posts (title, content) VALUES(?, ?)',
-            (title, content)
+            (title, content, )
         )
-        conn.commit()
-        close_db(conn)
-        return redirect(url_for('index'))
-    close_db(conn)
+        return redirect(url_for('blog.html'))
     return render_template('add_post.html')
 
-@app.route("/number/<int:number>")
-def say_number(number):
-    return f"Ты выбрал число {number}"
-
-@app.route("/Mark")
-def mark_name():
-    return "Привет, Марк"
-
-# @app.route("/Den")
-# def den_name():
-#     return "Привет, Ден"
-
-@app.route("/Vlad")
-def vlad_name():
-    return render_template('Vlad.html')
-
-@app.route('/power')
-def power_name():
-    return str(2**10)
-
-@app.route('/<name>')
-def say_name(name):
-    return f'Ты выбрал имя {name.capitalize()}'
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        try:
+            cursor.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
+                        (username, generate_password_hash(password))
+            )
+            print('Регистрация пользователя прошла успешно')
+        except sqlite3.IntegrityError:
+            return render_template('register.html',
+                            message = 'Username already exists!')
+    return render_template('register.html')
 
 @app.route("/blog")
 def blog():
@@ -98,10 +130,7 @@ def blog():
 
 @app.route('/post/<int:post_id>')
 def post(post_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
     post_one = cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
-    close_db(conn)
     if post_one:
         post_dict = {'id': post_one['id'], 'title': post_one['title'], 'content': post_one['content']}
         return render_template('post.html', post=post_dict)

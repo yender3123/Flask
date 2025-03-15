@@ -11,6 +11,20 @@
   </head>
   <body>
     <h1>My Blog</h1>
+    {% if not current_user.is_authenticated %}
+    <div>
+      <a href="/login">Войти</a>
+
+      <a href="/register">Регистрация</a>
+    </div>
+    {% endif %}
+        {% if current_user.is_authenticated %}
+    <div>
+      <a href="/add">Добавить новый пост</a>
+
+      <a href="/logout">Выход</a>
+    </div>
+    {% endif %}
     <a href="/add" class="add button"
       >Создать новый пост
       <img class="icon" src="{{ url_for('static', filename='add.png')}}" alt=""
@@ -20,6 +34,7 @@
       <div class="card">
         <h2><a href="/post/{{post.id}}">{{ post.title }}</a></h2>
         <p>{{ post.content }}</p>
+        <p class="author">By: {{ post.username }}</p>
       </div>
       {% endfor %}
     </div>
