@@ -1,18 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+import os
 
 import sqlite3
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = 'a_very_secret_key_12345'
+
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 connection = sqlite3.connect("sqlite.db", check_same_thread=False)
-cursor=connection.cursor()
+cursor = connection.cursor()
 
 
 def close_db(connection=None):
@@ -42,8 +44,17 @@ def load_user(user_id):
         return User(user[0], user[1], user[2])
     return None
 
-
-
+@app.route('/delete/<int:post_id>', methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    if post and post[3] == current_user.id:
+        cursor.execute('DELETE FROM posts WHERE id = ?', (post_id,))
+        print('Успешно')
+        return redirect(url_for('index'))
+    else:
+        print('Проблема')
+        return redirect(url_for('index'))
 @app.route("/")
 def index():
     cursor.execute('SELECT * FROM posts JOIN users ON posts.author_id = users.id')
@@ -51,7 +62,7 @@ def index():
     posts = []
     for post in reversed(result):
         posts.append(
-            {'id': post[0], 'title': post[1], 'content': post[2], 'author_id': post[3], 'username': post[4                    ]}
+            {'id': post[0], 'title': post[1], 'content': post[2], 'author_id': post[3], 'username': post[4]}
         )
     context = {'posts': posts}
     return render_template('blog.html', **context)
@@ -78,16 +89,18 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/add', methods=['GET', 'POST'])
+@login_required
 def add_post():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
         # author_id = request.form['']
         cursor.execute(
-            'INSERT INTO posts (title, content) VALUES(?, ?)',
-            (title, content, )
+            'INSERT INTO posts (title, content, author_id) VALUES(?, ?, ?)',
+            (title, content, current_user.id)
         )
-        return redirect(url_for('blog.html'))
+        connection.commit()
+        return redirect(url_for('index'))
     return render_template('add_post.html')
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -100,6 +113,7 @@ def register():
                         (username, generate_password_hash(password))
             )
             print('Регистрация пользователя прошла успешно')
+            return  redirect(url_for('login'))
         except sqlite3.IntegrityError:
             return render_template('register.html',
                             message = 'Username already exists!')

@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   </head>
   <body>
+
     <h1>My Blog</h1>
     {% if not current_user.is_authenticated %}
     <div>
@@ -20,8 +21,6 @@
     {% endif %}
         {% if current_user.is_authenticated %}
     <div>
-      <a href="/add">Добавить новый пост</a>
-
       <a href="/logout">Выход</a>
     </div>
     {% endif %}
@@ -34,7 +33,7 @@
       <div class="card">
         <h2><a href="/post/{{post.id}}">{{ post.title }}</a></h2>
         <p>{{ post.content }}</p>
-        <p class="author">By: {{ post.username }}</p>
+        <p class="author">By: {{ post.author_id }}</p>
       </div>
       {% endfor %}
     </div>
