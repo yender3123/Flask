@@ -37,11 +37,45 @@ class User(UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+def user_is_liking(user_id, post_id):
+    like = cursor.execute(
+        'SELECT * FROM like WHERE user_id = ? AND post_id = ?',
+        (user_id, post_id)).fetchone()
+    return bool(like)
+
+@app.route('/like/<int:post_id>')
+@login_required
+def like_post(post_id):
+    post = cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,)). fetchone()
+    if post:
+        if user_is_liking(current_user.id, post_id):
+            cursor.execute('DELETE FROM  like WHERE user_id = ? AND post_id = ?', (current_user.id, post_id))
+            connection.commit()
+            print('You unliked this post.')
+        else:
+            cursor.execute('INSERT INTO like (user_id, post_id) VALUES (?, ?)', (current_user.id, post_id))
+            connection.commit()
+            print('You liked this post.')
+        return redirect(url_for('index'))
+    return 'Пост не найден. Вернитесь обратно', 404
+@app.route('/comment/<int:post_id>', methods=['POST'])
+@login_required
+def comment_post(post_id):
+    post = cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    if post:
+        text = request.form.get('comment_text')
+        cursor.execute('INSERT INTO comments (user_id, post_id, comment_text) VALUES (?, ?, ?)',
+                       (current_user.id, post_id, text))
+        connection.commit()
+        return redirect(url_for('index'))
+    return 'Пост не найден. Вернитесь обратно', 404
+
 @login_manager.user_loader
 def load_user(user_id):
     user = cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
     if user is not None:
         return User(user[0], user[1], user[2])
+
     return None
 
 @app.route('/delete/<int:post_id>', methods=['POST'])
@@ -51,19 +85,45 @@ def delete_post(post_id):
     if post and post[3] == current_user.id:
         cursor.execute('DELETE FROM posts WHERE id = ?', (post_id,))
         print('Успешно')
+        connection.commit()
         return redirect(url_for('index'))
     else:
         print('Проблема')
         return redirect(url_for('index'))
 @app.route("/")
 def index():
-    cursor.execute('SELECT * FROM posts JOIN users ON posts.author_id = users.id')
+    cursor.execute('''  
+        SELECT posts.id, posts.title, posts.content, posts.author_id, 
+        users.username, COUNT(like.id) AS like FROM posts
+        LEFT JOIN users ON posts.author_id = users.id
+        LEFT JOIN like ON posts.id = like.post_id
+        GROUP BY posts.id, posts.title, posts.content, posts.author_id, users.username
+    ''')
     result = cursor.fetchall()
     posts = []
     for post in reversed(result):
         posts.append(
-            {'id': post[0], 'title': post[1], 'content': post[2], 'author_id': post[3], 'username': post[4]}
+            {
+                'id': post[0],
+                'title': post[1],
+                'content': post[2],
+                'author_id': post[3],
+                'username': post[4],
+                'like': post[5]
+            }
         )
+
+    if current_user.is_authenticated:
+        cursor.execute(
+            'SELECT post_id FROM like WHERE user_id = ?', (current_user.id,)
+        )
+        likes_result = cursor.fetchall()
+        liked_posts = [like[0] for like in likes_result]
+        print(liked_posts)
+
+        for post in posts:
+            post['liked'] = post['id'] in liked_posts
+        print(posts)
     context = {'posts': posts}
     return render_template('blog.html', **context)
 
@@ -144,12 +204,24 @@ def blog():
 
 @app.route('/post/<int:post_id>')
 def post(post_id):
-    post_one = cursor.execute('SELECT * FROM posts WHERE id = ?', (post_id,)).fetchone()
+    post_one = cursor.execute('SELECT * FROM posts JOIN users ON posts.author_id = users.id WHERE posts.id = ?', (post_id,)).fetchone()
+    comments = cursor.execute('''SELECT * FROM comments 
+    JOIN users ON comments.user_id = users.id WHERE comments.post_id = ?''', (post_id,)).fetchall()
+    print(comments)
     if post_one:
-        post_dict = {'id': post_one['id'], 'title': post_one['title'], 'content': post_one['content']}
-        return render_template('post.html', post=post_dict)
+        post_dict = {
+            'id': post_one[0],
+            'title': post_one[1],
+            'content': post_one[2],
+            'author_id': post_one[3],
+            'username': post_one[5]
+        }
+        comments_list = [{'id': comment[0], 'comment_text': comment[3], 'name': comment[6], 'time': comment[4]} for comment in comments]
+
+        return render_template('post.html', post=post_dict, comments=comments_list)
     else:
         return "Пост не найден", 404
+
 
 
 if __name__ == "__main__":

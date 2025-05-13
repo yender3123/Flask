@@ -1,41 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <title>My Blog</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='blog.css') }}"
-    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='blog.css') }}" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body>
+</head>
+<body>
 
     <h1>My Blog</h1>
     {% if not current_user.is_authenticated %}
     <div>
       <a href="/login">Войти</a>
-
       <a href="/register">Регистрация</a>
     </div>
     {% endif %}
-        {% if current_user.is_authenticated %}
+    {% if current_user.is_authenticated %}
     <div>
       <a href="/logout">Выход</a>
     </div>
     {% endif %}
-    <a href="/add" class="add button"
-      >Создать новый пост
-      <img class="icon" src="{{ url_for('static', filename='add.png')}}" alt=""
-    /></a>
+    <a href="/add" class="add button">Создать новый пост
+      <img class="icon" src="{{ url_for('static', filename='add.png')}}" alt="" />
+    </a>
     <div class="blog">
       {% for post in posts %}
       <div class="card">
         <h2><a href="/post/{{post.id}}">{{ post.title }}</a></h2>
         <p>{{ post.content }}</p>
         <p class="author">By: {{ post.author_id }}</p>
+        <p class="comments">
+          {% if current_user.is_authenticated %}
+          <button class="comments-button" onclick="location.href='/post/{{ post.id }}#comments'">
+            {{ post.comment_count }} Comments
+          </button>
+          {% else %}
+          <span>{{ post.comment_count }} Comments</span>
+          {% endif %}
+        </p>
+        {% if current_user.is_authenticated %}
+        <button class="like-button" onclick="location.href='{{ url_for('like_post', post_id=post.id) }}'">
+          {% if post.liked %}
+          <img src="{{ url_for('static', filename='like.png') }}" alt="like" />
+          Dislike
+          {% else %}
+          <img src="{{ url_for('static', filename='unlike.png') }}" alt="like" />
+          Like
+          {% endif %}
+          <span>&nbsp;</span>
+          <span>{{ post.like }}</span>
+        </button>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
-  </body>
+</body>
 </html>

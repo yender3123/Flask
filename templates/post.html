@@ -6,18 +6,33 @@
     <link rel="stylesheet" href="../static/style.css" />
   </head>
   <body>
-    <div class = 'post'>
+    <div class="post">
       <h1>{{ post.title }}</h1>
       <p>{{ post.content }}</p>
-      <a href="/">Назад</a>
+      <a href="/" class="button">Назад</a>
       <p>By: {{ post.username }}</p>
-
-      <form method="POST"
-      action="{{ url_for('delete_post', post_id=post.id) }}">
-          <button type="submit">Delete</button>
-
+      {% if current_user.id == post.author_id %}
+      <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}">
+        <button type="submit" class="button">Delete</button>
+        {% endif %}
       </form>
+      <div class="comments" id="comments">
+        {% for comment in comments %}
+        <div class="comment-item">
+          <p class="comment-text">{{ comment.comment_text }}</p>
+          <p class="comment-time">{{ comment.time }}</p>
+          <p class="comment-time">{{ comment.name }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% if current_user.is_authenticated %}
+      <form class="add_comment" method="POST" action="{{ url_for('comment_post', post_id=post.id) }}">
+        <textarea required name="comment_text" maxlength="50"></textarea>
+        <button type="submit" class="button">Comment</button>
+      </form>
+      {% else %}
+      <button type="submit"></button>
+      {% endif %}
     </div>
-
   </body>
 </html>
